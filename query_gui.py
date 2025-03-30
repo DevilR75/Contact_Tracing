@@ -155,7 +155,6 @@ class TrackerGUI:
         """
         Initialize the main GUI components: the canvas for displaying positions,
         the query input area, the query results panel, and the close button.
-        This version uses a Cartesian coordinate system with (0,0) at the bottom-left.
         """
         self.root = root
         self.board_size = board_size
