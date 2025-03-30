@@ -155,13 +155,18 @@ class TrackerGUI:
         """
         Initialize the main GUI components: the canvas for displaying positions,
         the query input area, the query results panel, and the close button.
+        This version uses a Cartesian coordinate system with (0,0) at the bottom-left.
         """
         self.root = root
         self.board_size = board_size
-        # Calculate cell size so that the canvas fits within MAX_CANVAS_SIZE
+        # Calculate cell size so that the grid fits within MAX_CANVAS_SIZE
         self.cell_size = max(1, int(MAX_CANVAS_SIZE / board_size))
-        canvas_width = board_size * self.cell_size
-        canvas_height = board_size * self.cell_size
+        # Define margins for axis labels
+        self.margin_left = 30   # Space for y-axis labels
+        self.margin_bottom = 30  # Space for x-axis labels
+        # Total canvas dimensions include the grid and margins
+        self.canvas_width = self.margin_left + board_size * self.cell_size
+        self.canvas_height = board_size * self.cell_size + self.margin_bottom
 
         self.root.title("GUI Tracker")
         self.root.configure(bg=BG_COLOR)
@@ -174,7 +179,7 @@ class TrackerGUI:
         self.left_frame = tk.Frame(self.main_frame, bg=BG_COLOR)
         self.left_frame.pack(side=tk.LEFT, padx=10, pady=10)
 
-        self.canvas = tk.Canvas(self.left_frame, width=canvas_width, height=canvas_height, bg="#222")
+        self.canvas = tk.Canvas(self.left_frame, width=self.canvas_width, height=self.canvas_height, bg="#222")
         self.canvas.pack()
 
         # Right frame for query input and displaying results
@@ -211,32 +216,66 @@ class TrackerGUI:
         # Start periodic update of the canvas
         self.periodic_update()
 
+    def canvas_x(self, x):
+        """Convert simulation x-coordinate to canvas x-coordinate."""
+        return self.margin_left + x * self.cell_size
+
+    def canvas_y(self, y):
+        """
+        Convert simulation y-coordinate (with 0 at bottom) to canvas y-coordinate.
+        This maps (0,0) to the bottom-left of the grid.
+        """
+        return self.board_size * self.cell_size - y * self.cell_size
+
     def update_canvas(self):
         """
         Clear and redraw the grid along with all persons on the canvas.
-        Each person is drawn as a circle with their name centered inside.
+        The grid is drawn in Cartesian style:
+          - (0,0) is at the bottom-left.
+          - X-axis labels are drawn below the grid.
+          - Y-axis labels are drawn to the left, with the bottom row labeled "0".
         """
         self.canvas.delete("all")
-        # Draw grid lines
+        # Draw horizontal grid lines (for y from 0 to board_size)
         for i in range(self.board_size + 1):
-            self.canvas.create_line(0, i * self.cell_size, self.board_size * self.cell_size, i * self.cell_size, fill="gray")
-            self.canvas.create_line(i * self.cell_size, 0, i * self.cell_size, self.board_size * self.cell_size, fill="gray")
+            y_line = self.canvas_y(i)
+            self.canvas.create_line(self.canvas_x(0), y_line,
+                                    self.canvas_x(self.board_size), y_line,
+                                    fill="gray")
+        # Draw vertical grid lines (for x from 0 to board_size)
+        for i in range(self.board_size + 1):
+            x_line = self.canvas_x(i)
+            self.canvas.create_line(x_line, self.canvas_y(0),
+                                    x_line, self.canvas_y(self.board_size),
+                                    fill="gray")
+        # Draw x-axis labels below the grid
+        for col in range(self.board_size):
+            x_mid = self.canvas_x(col) + self.cell_size / 2
+            y_label = self.board_size * self.cell_size + self.margin_bottom / 2
+            self.canvas.create_text(x_mid, y_label, text=str(col), fill=TEXT_COLOR, font=("Helvetica", 10))
+        # Draw y-axis labels to the left of the grid (Cartesian order: bottom cell labeled "0")
+        for row in range(self.board_size):
+            # The center of the cell with simulation y = row is at:
+            y_mid = self.canvas_y(row) - self.cell_size / 2
+            x_label = self.margin_left / 2
+            self.canvas.create_text(x_label, y_mid, text=str(row), fill=TEXT_COLOR, font=("Helvetica", 10))
         # Draw each person from the global positions dictionary
         with positions_lock:
             for person_id, data in positions.items():
                 x = data.get("x", 0)
                 y = data.get("y", 0)
-                name = data.get("name", str(person_id))
-                cx = x * self.cell_size + self.cell_size / 2
-                cy = y * self.cell_size + self.cell_size / 2
+                cx = self.canvas_x(x) + self.cell_size / 2
+                # Adjust y so that a simulation y of 0 appears at the bottom of the grid
+                cy = self.canvas_y(y) - self.cell_size / 2
                 r = self.cell_size / 3
                 self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r, fill=ACCENT_COLOR)
-                self.canvas.create_text(cx, cy, text=name, fill=TEXT_COLOR, font=("Helvetica", 10, "bold"))
+                self.canvas.create_text(cx, cy, text=data.get("name", str(person_id)),
+                                        fill=TEXT_COLOR, font=("Helvetica", 10, "bold"))
 
     def periodic_update(self):
         """Periodically update the canvas to reflect the latest positions."""
         self.update_canvas()
-        self.root.after(500, self.periodic_update)
+        self.root.after(50, self.periodic_update)
 
     def start_query(self):
         """
@@ -267,7 +306,7 @@ class TrackerGUI:
             name = data.get("name", "N/A")
             current_position = response.get("position", "N/A")
             contacts = response.get("contacts", [])
-            # Join contacts with newline so each appears in a column
+            # Join contacts with newline so that each appears in its own row
             contacts_text = "\n".join(map(str, contacts)) if contacts else "No contacts."
             result_text = (f"Name: {name}\n"
                            f"Person ID: {response.get('person_id', 'N/A')}\n"
