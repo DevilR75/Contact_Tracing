@@ -1,4 +1,4 @@
-# Khajiyev Amir A00122387,  Dmitriy Maul A00122400 , Samisha Verma A00120599 Saman Thapa Magar A00127870
+# Khajiyev Amir A00122387,  Dmitriy Maul A00122400 , Samisha Verma A00120599 , Saman Thapa Magar A00127870
 # GUI Tracker Application: Real-time tracking and querying using RabbitMQ
 import tkinter as tk
 import threading

@@ -1,4 +1,4 @@
-# Khajiyev Amir A00122387,  Dmitriy Maul A00122400 , Samisha Verma A00120599 Saman Thapa Magar A00127870
+# Khajiyev Amir A00122387,  Dmitriy Maul A00122400 , Samisha Verma A00120599, Saman Thapa Magar A00127870
 # Tracker Module: Receives position messages, processes queries, and tracks contacts using RabbitMQ
 import pika
 import json
