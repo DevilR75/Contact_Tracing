@@ -88,7 +88,7 @@ def request_board_size(channel):
 
 def main():
     # Prompt the user for name and speed
-    name = input("Enter name (e.g., 'Alice'): ") or "Anonymous"
+    name = input("Enter name (e.g., 'Bob'): ") or "Anonymous"
     # Capitalize first letter if not already capitalized
     name = name.strip().capitalize()
     speed_str = input("Enter speed (cells per second) [default 1.0]: ") or "1.0"
