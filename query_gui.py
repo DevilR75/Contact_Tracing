@@ -6,7 +6,7 @@ import json
 import time
 import uuid
 
-# Define color scheme constants
+# Gen Z Theme
 BG_COLOR = "#121212"          # Background color
 TEXT_COLOR = "#EEEEEE"        # Text color
 ACCENT_COLOR = "#FF007F"      # Accent color
